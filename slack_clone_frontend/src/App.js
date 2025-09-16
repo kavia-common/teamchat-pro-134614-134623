@@ -1,48 +1,64 @@
-import React, { useState, useEffect } from 'react';
-import logo from './logo.svg';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import './App.css';
+import { ChatProvider, useChat } from './context/ChatContext';
+import Sidebar from './components/Sidebar';
+import ChatWindow from './components/ChatWindow';
+import Profile from './pages/Profile';
+
+// PUBLIC_INTERFACE
+function TopBar() {
+  /** The fixed top bar containing the app logo and global search. */
+  const { globalQuery, setGlobalQuery, searchResults } = useChat();
+
+  return (
+    <div className="topbar">
+      <div className="logo" aria-label="TeamChat logo" />
+      <div className="searchbar" role="search">
+        <span>🔎</span>
+        <input
+          value={globalQuery}
+          onChange={(e) => setGlobalQuery(e.target.value)}
+          placeholder="Search all messages..."
+          aria-label="Search all messages"
+        />
+        <span className="pill">{searchResults.length} results</span>
+      </div>
+      <Link to="/profile" className="btn">Profile</Link>
+    </div>
+  );
+}
+
+// PUBLIC_INTERFACE
+function Layout() {
+  /** The main app layout with a fixed sidebar and main content area. */
+  return (
+    <div className="app-shell">
+      <TopBar />
+      <div className="content">
+        <Sidebar />
+        <div className="main">
+          <Routes>
+            <Route path="/" element={<Navigate to="/channel/general" replace />} />
+            <Route path="/channel/:channelId" element={<ChatWindow />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="*" element={<div style={{padding: 16}}>Not Found</div>} />
+          </Routes>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // PUBLIC_INTERFACE
 function App() {
-  const [theme, setTheme] = useState('light');
-
-  // Effect to apply theme to document element
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  // PUBLIC_INTERFACE
-  const toggleTheme = () => {
-    setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-  };
-
+  /** Root application. Wraps providers and router. */
   return (
-    <div className="App">
-      <header className="App-header">
-        <button 
-          className="theme-toggle" 
-          onClick={toggleTheme}
-          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-        >
-          {theme === 'light' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <p>
-          Current theme: <strong>{theme}</strong>
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ChatProvider>
+      <BrowserRouter>
+        <Layout />
+      </BrowserRouter>
+    </ChatProvider>
   );
 }
 
